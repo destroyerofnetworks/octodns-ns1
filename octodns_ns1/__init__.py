@@ -602,6 +602,9 @@ class Ns1Provider(BaseProvider):
                 data[k] = v if v != '' else None
         return data
 
+    def _find_redirects(self, zone):
+        return list
+
     def _data_for_geo_A(self, _type, record):
         # record meta (which would include geo information is only
         # returned when getting a record's detail, not from zone detail
@@ -965,7 +968,7 @@ class Ns1Provider(BaseProvider):
                 value['masking'] = 1
             value['query'] = 1 if redirect['query_forwarding'] else 0
             values.append(value)
-        return {'ttl': record['ttl'], 'type': _type, 'values': values}
+        return {'ttl': 3600, 'type': _type, 'values': values}
 
     def _data_for_DS(self, _type, record):
         values = []
@@ -1075,14 +1078,16 @@ class Ns1Provider(BaseProvider):
         for domain, redirects in self._client.redirects_list().items():
             if zone.owns('URLFWD', domain):
                 data = self._data_for_REDIRECT('URLFWD', redirects)
-                record = Record.new(zone, name, data, source=self, lenient=lenient)
+                record = Record.new(
+                    zone, name, data, source=self, lenient=lenient
+                )
                 zone_hash[('URLFWD', domain)] = record
 
+        # fails because function not found
         redirects = self._find_redirects(zone)
         pprint({
             'owned': redirects,
         })
-
 
         [zone.add_record(r, lenient=lenient) for r in zone_hash.values()]
         self.log.info(
